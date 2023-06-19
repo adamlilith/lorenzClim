@@ -7,7 +7,8 @@
 	end,
 	summary,
 	lorenz,
-	yearByYear
+	yearByYear,
+	correctWDI
 ) {
 
 	# key		'WDI'
@@ -15,7 +16,14 @@
 	# get rasters
 	ppt <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='prcp')
 	pet <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='ET')
-	y <- pet - ppt
+	
+	### correct WDI	!!!!
+	if (correctWDI) {
+		y <- pet - ppt
+	} else {
+		y <- ppt - pet
+	}
+	
 	monthIndices <- 1L:(12L * (end - start + 1L)) + 12L * (start - 1950L)
 	names(y) <- paste0('WDI_', monthIndices)
 
