@@ -31,8 +31,10 @@ lorenzClim(
 \item \code{ETR}: Ratio of AET to PET (unit-less)
 \item \code{WDI}: Water deficit index (PET - precipitation; mm)
 \item \code{wind}: Wind speed (m / s) (Note: This variable is not available in the paleoclimate set.)
-\item \code{VP}: Vapor pressure of water (hPa) (Note: This variable is not available in the paleoclimate set.)
-\item \code{LWN}: Net long-wave radiation at the surface (W / m2) (Note: This variable is not available in the paleoclimate set.)
+\item \code{vap}: Vapor pressure of water (hPa)
+\item \code{LWN}: Net downward long-wave radiation at the surface (W / m2)
+\item \code{SWD}: Downward short-wave radiation at the surface (W / m2)
+\item \code{SWU}: Upward short-wave radiation at the surface (W / m2)
 }}
 
 \item{summary}{Character vector: Manner in which to summarize the variable(s). See See \link[=https://www.nature.com/articles/sdata201648/tables/2]{Table 1} in Lorenz et al. (2016). Partial matching is used, and case is ignored.
