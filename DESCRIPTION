@@ -33,7 +33,8 @@ Depends:
 Imports:
 	methods,
 	stats,
-	terra
+	terra,
+	utils
 URL: https://github.com/adamlilith/lorenzClim
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.3
