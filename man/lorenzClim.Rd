@@ -4,7 +4,17 @@
 \alias{lorenzClim}
 \title{Reconstruct future climate variables that match paleoclimate variables}
 \usage{
-lorenzClim(var, summary, start, end, rcp, gcm, lorenz)
+lorenzClim(
+  var,
+  summary,
+  start,
+  end,
+  rcp,
+  gcm,
+  lorenz,
+  yearByYear = FALSE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{var}{Character vector: Name(s) of the variables to return. See \link[=https://www.nature.com/articles/sdata201648/tables/2]{Table 1} and \link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3} in Lorenz et al. (2016). These can be one or more of the following.  Partial matching is used, and case is ignored.
@@ -13,7 +23,7 @@ lorenzClim(var, summary, start, end, rcp, gcm, lorenz)
 \item \code{tmax}: Maximum temperature (deg C)
 \item \code{tmin}: Maximum temperature (deg C)
 \item \code{tmean}: Mean temperature (deg C) (not part of original Lorenz variables)
-\item \code{prec}: Precipitation (mm)
+\item \code{prcp}: Precipitation (mm)
 \item \code{GDD0} and `GDD5: Growing degree days using base 0 deg C or 5 deg C (days)
 \item \code{AET}: Actual evapotranspiration (mm)
 \item \code{PET}: Potential evapotranspiration (mm)
@@ -49,6 +59,10 @@ lorenzClim(var, summary, start, end, rcp, gcm, lorenz)
 }}
 
 \item{lorenz}{Character: Full path of the folder that contains \code{./rcp45} and/or \code{./rcp85}.}
+
+\item{yearByYear}{Logical: If \code{FALSE} (default), then for the annual "variability" summary statistic, first take the mean for each month (annual summaries) or quarter (quarter summaries) across years, then calculate the summary statistic across the 12 or 4 rasters. If \code{TRUE}, calculate the summary statistic across each year first, then take the average across years.}
+
+\item{verbose}{Logical: If \code{TRUE}, display progress.}
 }
 \value{
 A \code{SpatRaster} with one or more layers. Each layer will be named as per the respetive paleoclimate variable in Lorenz et al. (2016), Table 2.
@@ -60,8 +74,8 @@ Processing is "seemless" across the historical and future sets. For example, if 
 
 \strong{IMPORTANT}: To process historical and future rasters, they must be downloaded and saved as NetCDF files (the same format in which they are supplied). Data are available on \link[=https://datadryad.org//resource/doi:10.5061/dryad.1597g]{Dryad}
 \itemize{
-\item Historical files: Historical rasters must be downloaded, unzipped, and saved in a folder named "\code{./historical}". Each subfolder therein should be the same of a GCM, and have the appropriate NetCDF files.
-\item Future files: The future files for RCP 4.5 are \emph{must be} place a folder named \code{./rcp45}, and those for RCP 8.5 in \code{./rcp85}. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them.
+\item Historical files: Historical rasters must be downloaded, unzipped, and \emph{must be} saved in a folder named "\code{./historical}". Each subfolder therein should be the same of a GCM, and have the appropriate NetCDF files.
+\item Future files: The future files for RCP 4.5 \emph{must be} place a folder named \code{./rcp45}, and those for RCP 8.5 in \code{./rcp85}. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them.
 }
 }
 \examples{
@@ -76,83 +90,124 @@ Processing is "seemless" across the historical and future sets. For example, if 
 # example is for a Windows system:
 lorenz <- 'C:/Ecology/Data/Lorenz et al 2016'
 
-# one variable and one GCM
-out <- lorenzClim(
+library(terra)
+
+# one variable and one GCM, collated first across years by month
+outMxM <- lorenzClim(
     var = 'tmean',
     summary = '*',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-plot(out)
+outMxM
+
+# one variable and one GCM, collated first across years by month
+outYxY <- lorenzClim(
+    var = 'tmean',
+    summary = '*',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+    yearByYear = TRUE
+)
+
+outYxY
+
+plot(outMxM[['an_sd_TMEAN']] - outYxY[['an_sd_TMEAN']])
 
 # two variables and one GCM
-out <- lorenzClim(
-    var = c('tmean', 'prec'),
+twos <- lorenzClim(
+    var = c('tmin', 'tmax'),
     summary = 'annual',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-plot(out)
+plot(twos)
+
+# one variable and two RCPs
+rcps <- lorenzClim(
+    var = 'gdd0',
+    summary = 'monthly',
+    start = 2005,
+    end = 2007,
+    rcp = '*',
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+    yearByYear = FALSE
+)
+
+plot(rcps)
 
 # two variables and two GCMs
-out <- lorenzClim(
-    var = c('tmean', 'prec'),
-    summary = 'annual',
+et <- lorenzClim(
+    var = c('PET', 'AET'),
+    summary = 'quarter',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = c('ACCESS1-3', 'CanESM2'),
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+et
 
-# one variable, all GCMs, one summary
-out <- lorenzClim(
-    var = 'PET',
+# one variable, all GCMs, one summary statistic
+wind <- lorenzClim(
+    var = 'wind',
     summary = 'summary',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = '*',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+wind
 
 # "raw" monthly rasters
-out <- lorenzClim(
-    var = 'wind',
+raw <- lorenzClim(
+    var = 'etr',
     summary = 'raw',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-out
+raw
 
-# EVERYTHING!!!
-out <- lorenzClim(
+# EVERYTHING!!! Can take a few minutes, even for a 3-yr time span...
+all <- lorenzClim(
     var = '*',
     summary = '*',
     start = 2005,
     end = 2007,
-    rcp = 85,
+    rcp = '*',
     gcm = '*',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+all
 
 }
 }
