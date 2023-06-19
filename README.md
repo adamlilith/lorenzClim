@@ -61,7 +61,7 @@ out <- lorenzClim(
     lorenz = lorenz
 )
 
-pot(out)
+plot(out)
 
 # two variables and one GCM
 out <- lorenzClim(
@@ -74,7 +74,7 @@ out <- lorenzClim(
     lorenz = lorenz
 )
 
-out
+plot(out)
 
 # two variables and two GCMs
 out <- lorenzClim(
