@@ -12,6 +12,7 @@ lorenzClim(
   rcp,
   gcm,
   lorenz,
+  correctWDI = TRUE,
   yearByYear = FALSE,
   verbose = FALSE
 )
@@ -31,18 +32,19 @@ lorenzClim(
 \item \code{WDI}: Water deficit index (PET - precipitation; mm)
 \item \code{wind}: Wind speed (m / s) (Note: This variable is not available in the paleoclimate set.)
 \item \code{VP}: Vapor pressure of water (hPa) (Note: This variable is not available in the paleoclimate set.)
+\item \code{LWN}: Net long-wave radiation at the surface (W / m2) (Note: This variable is not available in the paleoclimate set.)
 }}
 
-\item{summary}{Character vector: Manner in which to summarize the variable(s). See See \link[=https://www.nature.com/articles/sdata201648/tables/2]{Table 1} in Lorenz et al. (2016). Partial matching is used, and case is ignored:
+\item{summary}{Character vector: Manner in which to summarize the variable(s). See See \link[=https://www.nature.com/articles/sdata201648/tables/2]{Table 1} in Lorenz et al. (2016). Partial matching is used, and case is ignored.
 \itemize{
 \item \code{*}: All types (except "\code{raw}").
 \item \code{raw}: All monthly values from January of the \code{start} year to December of the \code{end} year.
 \item \code{annual}: All annual "summary" and "variability" variables (see next two items).
-\item \code{summary}: All annual "summary" variables (sum or mean, depending on the variable).
-\item \code{var}: All annual "variability" variables (standard deviation or coefficient of variation, depending on the variable)
-\item \code{quarter}: Both quarterly "lower" and "higher" variables (see next two items). Quarters are "calendar" quarters (Q1: January, February, March; Q2: April May, June; and so on). For temperature, ETR, wind, and vapor pressure, monthly values are combined into quarters using averages. For precipitation, GDD0, GDD5, AET, and PET, monthly values are combined into quarters using sums.
-\item \code{qlwr}: Values of the quarter with the minimum values of the variables. Returns the "\code{qt_lwr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}).
-\item \code{qhgr}: Values of the quarter with the maximum values of the variables. Returns the "\code{qt_hgr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}).
+\item \code{summary}: All annual "summary" variables (sum or mean, depending on the variable--\code{na.rm} is set to \code{TRUE}).
+\item \code{var}: All annual "variability" variables (standard deviation or coefficient of variation, depending on the variable--\code{na.rm} is set to \code{TRUE})
+\item \code{quarter}: Both quarterly "lower" and "higher" variables (see next two items). Quarters are "calendar" quarters (Q1: January, February, March; Q2: April May, June; and so on). For temperature, ETR, wind, vapor pressure, and net longwave radiation, monthly values are combined into quarters using averages. For precipitation, GDD0, GDD5, AET, and PET, monthly values are combined into quarters using sums.
+\item \code{qlwr}: Values of the quarter with the minimum values of the variables. Returns the "\code{qt_lwr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}--\code{na.rm} is set to \code{TRUE}).
+\item \code{qhgr}: Values of the quarter with the maximum values of the variables. Returns the "\code{qt_hgr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}--\code{na.rm} is set to \code{TRUE}).
 \item \code{monthly}: Both monthly "lower" and "higher" variables (see next two items)
 \item \code{mlwr}: Minimum value across all 12 months of the year. Returns the "\code{mo_lwr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}).
 \item \code{mhgr}: Maximum value across all 12 months of the year.  Returns the "\code{mo_hgr}" rasters (\link[=https://www.nature.com/articles/sdata201648/tables/4]{Table 3}).
@@ -59,6 +61,8 @@ lorenzClim(
 }}
 
 \item{lorenz}{Character: Full path of the folder that contains \code{./rcp45} and/or \code{./rcp85}.}
+
+\item{correctWDI}{Logical: Water deficit index (WDI) is defined as PET - precipitation. However, the WDI rasters in the Lorenz et al. (2016) paleoclimate data (up to version Version 2017-06-16) appear to be precipitation - PET. To ensure comparability, you can calculate WDI using either version. If \code{correctWDI} is \code{TRUE} (default), then calculate historical/future WDI as PET - precipitation. If \code{FALSE}, use precipitation - PET to ensure comparability with the paleoclimate rasters (or just multiple the paleoclimate rasters by -1).}
 
 \item{yearByYear}{Logical: If \code{FALSE} (default), then for the annual "variability" summary statistic, first take the mean for each month (annual summaries) or quarter (quarter summaries) across years, then calculate the summary statistic across the 12 or 4 rasters. If \code{TRUE}, calculate the summary statistic across each year first, then take the average across years.}
 
@@ -138,7 +142,7 @@ plot(twos)
 
 # one variable and two RCPs
 rcps <- lorenzClim(
-    var = 'gdd0',
+    var = 'GDD0',
     summary = 'monthly',
     start = 2005,
     end = 2007,
@@ -193,6 +197,33 @@ raw <- lorenzClim(
 )
 
 raw
+
+# difference between corrected/uncorrected WDI rasters
+correct <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = TRUE,
+    yearByYear = FALSE
+)
+
+incorrect <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = FALSE,
+    yearByYear = FALSE
+)
+
+plot(c(correct, incorrect, -1 * incorrect))
 
 # EVERYTHING!!! Can take a few minutes, even for a 3-yr time span...
 all <- lorenzClim(

@@ -26,9 +26,9 @@ methods::setMethod(
 methods::setMethod(
 	f = 'cv',
 	signature = c(x = 'SpatRaster'),
-	definition = function(x) {
-		stdev <- terra::app(x, sd)
-		avg <- terra::mean(x)
+	definition = function(x, na.rm = FALSE) {
+		stdev <- terra::app(x, sd, na.rm = na.rm)
+		avg <- terra::mean(x, na.rm=TRUE)
 		out <- stdev / avg
 		names(out) <- 'cv'
 		out

@@ -27,16 +27,17 @@
 #' * `WDI`: Water deficit index (PET - precipitation; mm)
 #' * `wind`: Wind speed (m / s) (Note: This variable is not available in the paleoclimate set.)
 #' * `VP`: Vapor pressure of water (hPa) (Note: This variable is not available in the paleoclimate set.)
+#' * `LWN`: Net long-wave radiation at the surface (W / m2) (Note: This variable is not available in the paleoclimate set.)
 #' 
-#' @param summary Character vector: Manner in which to summarize the variable(s). See See [Table 1][https://www.nature.com/articles/sdata201648/tables/2] in Lorenz et al. (2016). Partial matching is used, and case is ignored:
+#' @param summary Character vector: Manner in which to summarize the variable(s). See See [Table 1][https://www.nature.com/articles/sdata201648/tables/2] in Lorenz et al. (2016). Partial matching is used, and case is ignored.
 #' * `*`: All types (except "`raw`").
 #' * `raw`: All monthly values from January of the `start` year to December of the `end` year.
 #' * `annual`: All annual "summary" and "variability" variables (see next two items).
-#' * `summary`: All annual "summary" variables (sum or mean, depending on the variable).
-#' * `var`: All annual "variability" variables (standard deviation or coefficient of variation, depending on the variable)
-#' * `quarter`: Both quarterly "lower" and "higher" variables (see next two items). Quarters are "calendar" quarters (Q1: January, February, March; Q2: April May, June; and so on). For temperature, ETR, wind, and vapor pressure, monthly values are combined into quarters using averages. For precipitation, GDD0, GDD5, AET, and PET, monthly values are combined into quarters using sums.
-#' * `qlwr`: Values of the quarter with the minimum values of the variables. Returns the "`qt_lwr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]).
-#' * `qhgr`: Values of the quarter with the maximum values of the variables. Returns the "`qt_hgr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]).
+#' * `summary`: All annual "summary" variables (sum or mean, depending on the variable--`na.rm` is set to `TRUE`).
+#' * `var`: All annual "variability" variables (standard deviation or coefficient of variation, depending on the variable--`na.rm` is set to `TRUE`)
+#' * `quarter`: Both quarterly "lower" and "higher" variables (see next two items). Quarters are "calendar" quarters (Q1: January, February, March; Q2: April May, June; and so on). For temperature, ETR, wind, vapor pressure, and net longwave radiation, monthly values are combined into quarters using averages. For precipitation, GDD0, GDD5, AET, and PET, monthly values are combined into quarters using sums.
+#' * `qlwr`: Values of the quarter with the minimum values of the variables. Returns the "`qt_lwr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]--`na.rm` is set to `TRUE`).
+#' * `qhgr`: Values of the quarter with the maximum values of the variables. Returns the "`qt_hgr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]--`na.rm` is set to `TRUE`).
 #' * `monthly`: Both monthly "lower" and "higher" variables (see next two items)
 #' * `mlwr`: Minimum value across all 12 months of the year. Returns the "`mo_lwr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]).
 #' * `mhgr`: Maximum value across all 12 months of the year.  Returns the "`mo_hgr`" rasters ([Table 3][https://www.nature.com/articles/sdata201648/tables/4]).
@@ -46,6 +47,8 @@
 #' @param yearByYear Logical: If `FALSE` (default), then for the annual "variability" summary statistic, first take the mean for each month (annual summaries) or quarter (quarter summaries) across years, then calculate the summary statistic across the 12 or 4 rasters. If `TRUE`, calculate the summary statistic across each year first, then take the average across years.
 #'
 #' @param start,end Numeric: Start and end years of the period over which the variables are to be calculated. If the period is longer than a year, then the averages across years will be returned. Values must be between 1950 and 2100, inclusive.
+#'
+#' @param correctWDI Logical: Water deficit index (WDI) is defined as PET - precipitation. However, the WDI rasters in the Lorenz et al. (2016) paleoclimate data (up to version Version 2017-06-16) appear to be precipitation - PET. To ensure comparability, you can calculate WDI using either version. If `correctWDI` is `TRUE` (default), then calculate historical/future WDI as PET - precipitation. If `FALSE`, use precipitation - PET to ensure comparability with the paleoclimate rasters (or just multiple the paleoclimate rasters by -1).
 #'
 #' @param verbose Logical: If `TRUE`, display progress.
 #'
@@ -65,6 +68,7 @@ lorenzClim <- function(
 	rcp,
 	gcm,
 	lorenz,
+	correctWDI = TRUE,
 	yearByYear = FALSE,
 	verbose = FALSE
 ) {
@@ -100,12 +104,12 @@ lorenzClim <- function(
 		} else if ('*' %in% rcp & end >= 2006) {
 			rcp <- c(45, 85)
 		} else if ('*' %in% rcp & end <= 2005) {
-			rcp <- NULL
+			rcp <- NA
 		} else if (end >= 2006) {
 			for (i in seq_along(rcp)) if (rcp[i] %in% c(4.5, 8.5)) rcp[i] <- rcp[i] * 10
 			if (!(any(rcp %in% c(45, 85)))) stop('RCP must be 45 and/or 85.')
 		} else if (end <= 2005) {
-			rcp <- NULL
+			rcp <- NA
 		}
 
 	### GCM(s)
@@ -135,7 +139,7 @@ lorenzClim <- function(
 	### variable(s)
 	###############
 
-		options <- c('tmax', 'tmin', 'tmean', 'prcp', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'VP')
+		options <- c('tmax', 'tmin', 'tmean', 'prcp', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'VP', 'LWN')
 		
 		var <- unique(var)
 		if ('*' %in% var) {
@@ -203,6 +207,7 @@ lorenzClim <- function(
 		if (any(c('AET', 'PET', 'ETR', 'WDI') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='ET')
 		if (any(c('wind') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='wind')
 		if (any(c('VP') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='vap')
+		if (any(c('LWN') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='lwn')
 	
 	### process individual variables
 	################################
@@ -218,7 +223,11 @@ lorenzClim <- function(
 			count <- count + 1L
 			
 			if (verbose) {
-				cat(thisGcm, 'GCM | RCP', thisRcp, '\n')
+				if (is.na(rcp)) {
+					cat(thisGcm, 'GCM\n')
+				} else {
+					cat(thisGcm, 'GCM | RCP', rcp, '\n')
+				}
 				utils::flush.console()
 			}
 			
@@ -304,7 +313,7 @@ lorenzClim <- function(
 			}
 
 			if (any('WDI' %in% var)) {
-				thisOut <- .wdi(key='WDI', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				thisOut <- .wdi(key='WDI', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear, correctWDI=correctWDI)
 				if (length(out) < countGcm) {
 					out[[count]] <- thisOut
 				} else {
@@ -330,11 +339,25 @@ lorenzClim <- function(
 				}
 			}
 
+			if (any('LWN' %in% var)) {
+				thisOut <- .lwn(key='LWN', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
+			}
+
+			names(out)[count] <- if (!is.na(thisRcp[1L])) {
+				paste0(gcm, '_rcp', thisRcp)
+			} else {
+				gcm
+			}
+
 		} # next RCP
 
 	} # next GCM
 
-	names(out) <- paste0(gcm, '_rcp', rcp)
 	if (length(gcm) == 1L) out <- out[[1L]]
 	out
 
@@ -460,13 +483,13 @@ lorenzClim <- function(
 		}
 	
 		if (fx == 'mean') {
-			out <- terra::mean(out)
+			out <- terra::mean(out, na.rm=TRUE)
 		} else if (fx == 'sd') {
-			out <- terra::app(out, function(x) sd(x))
+			out <- terra::app(out, function(x) sd(x, na.rm=TRUE))
 		} else if (fx == 'sum') {
-			out <- sum(out)
+			out <- sum(out, na.rm=TRUE)
 		} else if (fx == 'cv') {
-			out <- cv(out)
+			out <- cv(out, na.rm=TRUE)
 		}
 
 	# collate year-by-year
@@ -478,13 +501,13 @@ lorenzClim <- function(
 			yy <- y[[indices]]
 
 			if (fx == 'mean') {
-				yyy <- terra::mean(yy)
+				yyy <- terra::mean(yy, na.rm=TRUE)
 			} else if (fx == 'sd') {
 				yyy <- terra::app(yy, function(x) sd(x))
 			} else if (fx == 'sum') {
-				yyy <- sum(yy)
+				yyy <- sum(yy, na.rm=TRUE)
 			} else if (fx == 'cv') {
-				yyy <- cv(yy)
+				yyy <- cv(yy, na.rm=TRUE)
 			}
 
 			if (yr == 1L) {
@@ -525,17 +548,17 @@ lorenzClim <- function(
 		
 		if (qtFx == 'mean') {
 			
-			q1 <- terra::mean(q1)
-			q2 <- terra::mean(q2)
-			q3 <- terra::mean(q3)
-			q4 <- terra::mean(q4)
+			q1 <- terra::mean(q1, na.rm=TRUE)
+			q2 <- terra::mean(q2, na.rm=TRUE)
+			q3 <- terra::mean(q3, na.rm=TRUE)
+			q4 <- terra::mean(q4, na.rm=TRUE)
 			
 		} else if (qtFx == 'sum') {
 		
-			q1 <- sum(q1)
-			q2 <- sum(q2)
-			q3 <- sum(q3)
-			q4 <- sum(q4)
+			q1 <- sum(q1, na.rm=TRUE)
+			q2 <- sum(q2, na.rm=TRUE)
+			q3 <- sum(q3, na.rm=TRUE)
+			q4 <- sum(q4, na.rm=TRUE)
 		
 		}
 			
@@ -567,7 +590,7 @@ lorenzClim <- function(
 	
 		indices <- 12L * (yr - 1) + 1L:12L
 		yy <- y[[indices]]
-		thisOut <- terra::app(yy, fx)
+		thisOut <- terra::app(yy, fx, na.rm=TRUE)
 		
 		if (yr == 1L) {
 			out <- thisOut

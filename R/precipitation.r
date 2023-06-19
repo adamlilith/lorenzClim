@@ -13,7 +13,7 @@
 	# key		'prcp'
 
 	# get rasters
-	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='prcp')
+	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename=key)
 
 	prettyKey <- toupper(key)
 

@@ -1,5 +1,5 @@
 #' @noRd
-.aetpet <- function(
+.lwn <- function(
 	key,
 	rcp,
 	gcm,
@@ -10,18 +10,17 @@
 	yearByYear
 ) {
 
-	# key		'AET' or 'PET'
+	# key		'lwn'
 
 	# get rasters
-	set <- if (key == 'PET') { 1 } else if (key == 'AET') { 2 }
-	y <- .getRasters(set=set, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='ET')
+	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename=key)
 
 	prettyKey <- toupper(key)
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'sum', yearByYear=FALSE)
-		names(thisOut) <- paste0('an_sum_', prettyKey)
+		thisOut <- .annual(y, 'mean', yearByYear=FALSE)
+		names(thisOut) <- paste0('an_mean_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
 		} else {
@@ -31,8 +30,8 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'cv', yearByYear=yearByYear)
-		names(thisOut) <- paste0('an_cv_', prettyKey)
+		thisOut <- .annual(y, 'sd', yearByYear=yearByYear)
+		names(thisOut) <- paste0('an_sd_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
 		} else {

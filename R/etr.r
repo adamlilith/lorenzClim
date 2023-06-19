@@ -24,7 +24,7 @@
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'mean', yearByYear=FALSE)
+		thisOut <- .annual(y, fx='mean', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_avg_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -35,7 +35,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'cv', yearByYear=yearByYear)
+		thisOut <- .annual(y, fx='cv', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_cv_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)

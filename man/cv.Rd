@@ -8,7 +8,7 @@
 \usage{
 \S4method{cv}{numeric}(x, na.rm = FALSE)
 
-\S4method{cv}{SpatRaster}(x)
+\S4method{cv}{SpatRaster}(x, na.rm = FALSE)
 }
 \arguments{
 \item{x}{Numeric vector or a \code{SpatRaster} "stack."}

@@ -57,7 +57,7 @@ plot(twos)
 
 # one variable and two RCPs
 rcps <- lorenzClim(
-    var = 'gdd0',
+    var = 'GDD0',
     summary = 'monthly',
     start = 2005,
     end = 2007,
@@ -112,6 +112,33 @@ raw <- lorenzClim(
 )
 
 raw
+
+# difference between corrected/uncorrected WDI rasters
+correct <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = TRUE,
+    yearByYear = FALSE
+)
+
+incorrect <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = FALSE,
+    yearByYear = FALSE
+)
+
+plot(c(correct, incorrect, -1 * incorrect))
 
 # EVERYTHING!!! Can take a few minutes, even for a 3-yr time span...
 all <- lorenzClim(

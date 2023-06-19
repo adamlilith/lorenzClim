@@ -1,5 +1,5 @@
 #' @noRd
-.wind <- function(
+.et <- function(
 	key,
 	rcp,
 	gcm,
@@ -10,17 +10,18 @@
 	yearByYear
 ) {
 
-	# key		'wind'
+	# key		'AET' or 'PET'
 
 	# get rasters
-	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename=key)
-	
+	set <- if (key == 'PET') { 1 } else if (key == 'AET') { 2 }
+	y <- .getRasters(set=set, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='ET')
+
 	prettyKey <- toupper(key)
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'mean', yearByYear=FALSE)
-		names(thisOut) <- paste0('an_avg_', prettyKey)
+		thisOut <- .annual(y, 'sum', yearByYear=FALSE)
+		names(thisOut) <- paste0('an_sum_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
 		} else {
