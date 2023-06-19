@@ -27,9 +27,9 @@ Alternatively, you can install the development version of this package using:
 
 You may need to install the `remotes` package first.
 
-# Functions #
+# How-to #
 
-The key function in the package is named `lorenzClim()`. To use it, you need to:
+The key function in the package is `lorenzClim()`. To use it, you need to:
 
 1. Download the future and/or historical climate rasters from <a href="https://datadryad.org//resource/doi:10.5061/dryad.1597g">Dryad</a>.
 
