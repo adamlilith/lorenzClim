@@ -41,6 +41,7 @@ The key function in the package is named `lorenzClim()`. To use it, you need to:
 	 
 3. Let's do it!
 
+```
 library(lorenzClim)
 
 # This is the path where the "/historical", "/rcp45" and "/rcp85" folders
@@ -126,6 +127,7 @@ out <- lorenzClim(
 )
 
 out
+```
 
 # Citations
 
