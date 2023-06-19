@@ -1,0 +1,39 @@
+Package: lorenzClim
+Type: Package
+Title: Match future, historical, and paleoclimate variables from Lorenz et al.
+Version: 1.0.0
+Date: 2023-06-18
+Authors@R: 
+	c(
+		person(
+			given = 'Adam B.',
+			family = 'Smith',
+			role = c('cre', 'aut'),
+			email = 'adam.smith@mobot.org',
+			comment = c(ORCID = '0000-0002-6420-1659')
+		)
+	)
+Maintainer: Adam B. Smith <adam.smith@mobot.org>
+Description: Create historical and future climate variables that match
+	paleoclimate variables based on Lorenz et al. (2016 Scientific Data;
+	doi: 10.1038/sdata.2016.48). Lorenz et al. present two North American
+	paleoclimate data reconstructions from the last glacial maximum to the
+	present, plus future climate scenario products from the Coupled Model
+	Intercomparison Project Phase 5 (CMIP5) for 12 global circulation models.
+	The variables in the future climate scenarios are not all the same as those
+	in the paleoclimate reconstructions. Tools in this package can be used to
+	reconstruct the same variables as in the paleoclimate data, over a
+	user-specified period of time (from 2006 through 2100) for Representative
+	Concentration Pathways (RCPs) 4.5 and 8.5.
+License: MIT
+Encoding: UTF-8
+LazyData: true
+Depends:
+	R (>= 4.0.0)
+Imports:
+	methods,
+	stats,
+	terra
+URL: https://github.com/adamlilith/lorenzClim
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
