@@ -1,24 +1,4 @@
 #' @noRd
-.lorenzPrec <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.prec(
-		key = 'prec',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-### process precipitation
 .prec <- function(
 	key,
 	rcp,
@@ -26,11 +6,11 @@
 	start,
 	end,
 	summary,
-	lorenz
-
+	lorenz,
+	yearByYear
 ) {
 
-	# key		'prec'
+	# key		'prcp'
 
 	# get rasters
 	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='prcp')
@@ -39,7 +19,7 @@
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'sum')
+		thisOut <- .annual(y, 'sum', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_sum_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -50,7 +30,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'cv')
+		thisOut <- .annual(y, 'cv', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_cv_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -61,7 +41,7 @@
 	
 	# quarterly minimum
 	if ('qlwr' %in% summary) {
-		thisOut <- .quarter(y, min, 'sum')
+		thisOut <- .quarter(y, min, qtFx='sum')
 		names(thisOut) <- paste0('qt_lwr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -72,7 +52,7 @@
 	
 	# quarterly maximum
 	if ('qhgr' %in% summary) {
-		thisOut <- .quarter(y, max, 'sum')
+		thisOut <- .quarter(y, max, qtFx='sum')
 		names(thisOut) <- paste0('qt_hgr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)

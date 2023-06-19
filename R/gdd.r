@@ -1,44 +1,4 @@
 #' @noRd
-.lorenzGDD0 <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.gdd(
-		key = 'GDD0',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-#' @noRd
-.lorenzGDD5 <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.gdd(
-		key = 'GDD5',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-### process GDD
 .gdd <- function(
 	key,
 	rcp,
@@ -46,8 +6,8 @@
 	start,
 	end,
 	summary,
-	lorenz
-
+	lorenz,
+	yearByYear
 ) {
 
 	# key		'GDD0' or 'GDD5'
@@ -60,7 +20,7 @@
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'sum')
+		thisOut <- .annual(y, 'sum', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_sum_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -71,7 +31,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'sd')
+		thisOut <- .annual(y, 'sd', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_sd_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -82,7 +42,7 @@
 	
 	# quarterly minimum
 	if ('qlwr' %in% summary) {
-		thisOut <- .quarter(y, min, 'sum')
+		thisOut <- .quarter(y, min, qtFx='sum')
 		names(thisOut) <- paste0('qt_lwr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -93,7 +53,7 @@
 	
 	# quarterly maximum
 	if ('qhgr' %in% summary) {
-		thisOut <- .quarter(y, max, 'sum')
+		thisOut <- .quarter(y, max, qtFx='sum')
 		names(thisOut) <- paste0('qt_hgr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)

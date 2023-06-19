@@ -1,63 +1,4 @@
 #' @noRd
-.lorenzTmax <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.temperature(
-		key = 'tmax',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-#' @noRd
-.lorenzTmin <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.temperature(
-		key = 'tmin',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-#' @noRd
-.lorenzTmean <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.temperature(
-		key = 'tmean',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
 ### process tmax/tmin/tmean
 .temperature <- function(
 	key,
@@ -66,7 +7,8 @@
 	start,
 	end,
 	summary,
-	lorenz
+	lorenz,
+	yearByYear
 ) {
 
 	# key		'tmax' or 'tmin' or 'tmean'
@@ -90,7 +32,7 @@
 
 	# annual mean
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'mean')
+		thisOut <- .annual(y, 'mean', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_avg_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -101,7 +43,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'sd')
+		thisOut <- .annual(y, 'sd', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_sd_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -112,7 +54,7 @@
 	
 	# quarterly minimum
 	if ('qlwr' %in% summary) {
-		thisOut <- .quarter(y, min, 'mean')
+		thisOut <- .quarter(y, fx=min, qtFx='mean')
 		names(thisOut) <- paste0('qt_lwr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -123,8 +65,8 @@
 	
 	# quarterly maximum
 	if ('qhgr' %in% summary) {
-		thisOut <- .quarter(y, max, 'mean')
-		names(thisOut) <- paste0('qt_hgr_', prettyKey)
+		thisOut <- .quarter(y, fx=max, qtFx='mean')
+		names(thisOut) <- paste0('qt_hgr_', prettyKey, yearByYear=yearByYear)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
 		} else {

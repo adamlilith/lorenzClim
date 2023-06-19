@@ -1,24 +1,4 @@
 #' @noRd
-.lorenzETR <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.etr(
-		key = 'ETR',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-### process ETR
 .etr <- function(
 	key,
 	rcp,
@@ -26,7 +6,8 @@
 	start,
 	end,
 	summary,
-	lorenz
+	lorenz,
+	yearByYear
 ) {
 
 	# key		'ETR'
@@ -43,7 +24,7 @@
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'mean')
+		thisOut <- .annual(y, 'mean', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_avg_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -54,7 +35,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'cv')
+		thisOut <- .annual(y, 'cv', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_cv_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -65,7 +46,7 @@
 	
 	# quarterly minimum
 	if ('qlwr' %in% summary) {
-		thisOut <- .quarter(y, min, 'mean')
+		thisOut <- .quarter(y, min, qtFx='mean')
 		names(thisOut) <- paste0('qt_lwr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -76,7 +57,7 @@
 	
 	# quarterly maximum
 	if ('qhgr' %in% summary) {
-		thisOut <- .quarter(y, max, 'mean')
+		thisOut <- .quarter(y, max, qtFx='mean')
 		names(thisOut) <- paste0('qt_hgr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)

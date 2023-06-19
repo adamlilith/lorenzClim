@@ -1,44 +1,4 @@
 #' @noRd
-.lorenzAET <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.aetpet(
-		key = 'AET',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-#' @noRd
-.lorenzPET <- function(
-	summary,
-	start,
-	end,
-	rcp,
-	gcm,
-	lorenz
-) {
-	.aetpet(
-		key = 'PET',
-		rcp = rcp,
-		gcm = gcm,
-		start = start,
-		end = end,
-		summary = summary,
-		lorenz = lorenz
-	)
-}
-
-### process AET
 .aetpet <- function(
 	key,
 	rcp,
@@ -46,8 +6,8 @@
 	start,
 	end,
 	summary,
-	lorenz
-
+	lorenz,
+	yearByYear
 ) {
 
 	# key		'AET' or 'PET'
@@ -60,7 +20,7 @@
 
 	# annual sum
 	if ('summary' %in% summary) {
-		thisOut <- .annual(y, 'sum')
+		thisOut <- .annual(y, 'sum', yearByYear=FALSE)
 		names(thisOut) <- paste0('an_sum_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -71,7 +31,7 @@
 	
 	# annual variability
 	if ('var' %in% summary) {
-		thisOut <- .annual(y, 'cv')
+		thisOut <- .annual(y, 'cv', yearByYear=yearByYear)
 		names(thisOut) <- paste0('an_cv_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -82,7 +42,7 @@
 	
 	# quarterly minimum
 	if ('qlwr' %in% summary) {
-		thisOut <- .quarter(y, min, 'mean')
+		thisOut <- .quarter(y, min, qtFx='mean')
 		names(thisOut) <- paste0('qt_lwr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
@@ -93,7 +53,7 @@
 	
 	# quarterly maximum
 	if ('qhgr' %in% summary) {
-		thisOut <- .quarter(y, max, 'mean')
+		thisOut <- .quarter(y, max, qtFx='mean')
 		names(thisOut) <- paste0('qt_hgr_', prettyKey)
 		if (exists('out', inherits=FALSE)) {
 			out <- c(out, thisOut)
