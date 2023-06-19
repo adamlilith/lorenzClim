@@ -26,8 +26,10 @@
 #' * `ETR`: Ratio of AET to PET (unit-less)
 #' * `WDI`: Water deficit index (PET - precipitation; mm)
 #' * `wind`: Wind speed (m / s) (Note: This variable is not available in the paleoclimate set.)
-#' * `VP`: Vapor pressure of water (hPa) (Note: This variable is not available in the paleoclimate set.)
-#' * `LWN`: Net long-wave radiation at the surface (W / m2) (Note: This variable is not available in the paleoclimate set.)
+#' * `vap`: Vapor pressure of water (hPa)
+#' * `LWN`: Net downward long-wave radiation at the surface (W / m2)
+#' * `SWD`: Downward short-wave radiation at the surface (W / m2)
+#' * `SWU`: Upward short-wave radiation at the surface (W / m2)
 #' 
 #' @param summary Character vector: Manner in which to summarize the variable(s). See See [Table 1][https://www.nature.com/articles/sdata201648/tables/2] in Lorenz et al. (2016). Partial matching is used, and case is ignored.
 #' * `*`: All types (except "`raw`").
@@ -139,7 +141,7 @@ lorenzClim <- function(
 	### variable(s)
 	###############
 
-		options <- c('tmax', 'tmin', 'tmean', 'prcp', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'VP', 'LWN')
+		options <- c('tmax', 'tmin', 'tmean', 'prcp', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'vap', 'LWN', 'SWD', 'SWU')
 		
 		var <- unique(var)
 		if ('*' %in% var) {
@@ -206,8 +208,10 @@ lorenzClim <- function(
 		if (any(c('GDD0', 'GDD5') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='gdd')
 		if (any(c('AET', 'PET', 'ETR', 'WDI') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='ET')
 		if (any(c('wind') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='wind')
-		if (any(c('VP') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='vap')
+		if (any(c('vap') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='vap')
 		if (any(c('LWN') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='lwn')
+		if (any(c('SWD') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='swd')
+		if (any(c('SWU') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='swu')
 	
 	### process individual variables
 	################################
@@ -330,8 +334,8 @@ lorenzClim <- function(
 				}
 			}
 			
-			if (any('VP' %in% var)) {
-				thisOut <- .vp(key='VP', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+			if (any('vap' %in% var)) {
+				thisOut <- .vap(key='vap', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
 				if (length(out) < countGcm) {
 					out[[count]] <- thisOut
 				} else {
@@ -340,7 +344,25 @@ lorenzClim <- function(
 			}
 
 			if (any('LWN' %in% var)) {
-				thisOut <- .lwn(key='LWN', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				thisOut <- .rad(key='lwn', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
+			}
+
+			if (any('SWD' %in% var)) {
+				thisOut <- .rad(key='swd', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
+			}
+
+			if (any('SWU' %in% var)) {
+				thisOut <- .rad(key='swu', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
 				if (length(out) < countGcm) {
 					out[[count]] <- thisOut
 				} else {

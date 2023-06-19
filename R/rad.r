@@ -1,5 +1,5 @@
 #' @noRd
-.lwn <- function(
+.rad <- function(
 	key,
 	rcp,
 	gcm,

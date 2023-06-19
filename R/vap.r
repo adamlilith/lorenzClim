@@ -1,5 +1,5 @@
 #' @noRd
-.vp <- function(
+.vap <- function(
 	key,
 	rcp,
 	gcm,
@@ -13,7 +13,7 @@
 	# key		'VP'
 
 	# get rasters
-	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename='vap')
+	y <- .getRasters(set=1, start=start, end=end, lorenz=lorenz, rcp=rcp, gcm=gcm, filename=key)
 
 	prettyKey <- toupper(key)
 
