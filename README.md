@@ -45,6 +45,7 @@ The key function in the package is `lorenzClim()`. To use it, you need to:
 
 ```
 library(lorenzClim)
+library(terra) # needed to support rasters
 
 # This is the path where the "/historical", "/rcp45" and "/rcp85" folders
 # reside. Each of these needs to have subfolders with each GCM's output. Change
