@@ -19,11 +19,8 @@ Each <a href="https://www.nature.com/articles/sdata201648/tables/3">general circ
 * Future files: The future files for RCP 4.5 are *must be* place a folder named `./rcp45`, and those for RCP 8.5 in `./rcp85`. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them.
 
 # Installation #
-You can install this package from CRAN using:
 
-`install.packages('lorenzClim', dependencies = TRUE)`
-
-Alternatively, you can install the development version of this package using:
+You can install the development version of this package using:
 
 `remotes::install_github('adamlilith/lorenzClim', dependencies = TRUE)`  
 
@@ -53,83 +50,149 @@ library(terra) # needed to support rasters
 # example is for a Windows system:
 lorenz <- 'C:/Ecology/Data/Lorenz et al 2016'
 
-# one variable and one GCM, averaged across 2005-2007
-out <- lorenzClim(
+# one variable and one GCM, collated first across years by month
+outMxM <- lorenzClim(
     var = 'tmean',
     summary = '*',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-plot(out)
+outMxM
+
+# one variable and one GCM, collated first across years by month
+outYxY <- lorenzClim(
+    var = 'tmean',
+    summary = '*',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+    yearByYear = TRUE
+)
+
+outYxY
+
+plot(outMxM[['an_sd_TMEAN']] - outYxY[['an_sd_TMEAN']])
 
 # two variables and one GCM
-out <- lorenzClim(
-    var = c('tmean', 'prec'),
+twos <- lorenzClim(
+    var = c('tmin', 'tmax'),
     summary = 'annual',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-plot(out)
+plot(twos)
+
+# one variable and two RCPs
+rcps <- lorenzClim(
+    var = 'GDD0',
+    summary = 'monthly',
+    start = 2005,
+    end = 2007,
+    rcp = '*',
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+    yearByYear = FALSE
+)
+
+plot(rcps)
 
 # two variables and two GCMs
-out <- lorenzClim(
-    var = c('tmean', 'prec'),
-    summary = 'annual',
+et <- lorenzClim(
+    var = c('PET', 'AET'),
+    summary = 'quarter',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = c('ACCESS1-3', 'CanESM2'),
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+et
 
-# one variable, all GCMs, one summary
-out <- lorenzClim(
-    var = 'PET',
+# one variable, all GCMs, one summary statistic
+wind <- lorenzClim(
+    var = 'wind',
     summary = 'summary',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = '*',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+wind
 
 # "raw" monthly rasters
-out <- lorenzClim(
-    var = 'wind',
+raw <- lorenzClim(
+    var = 'etr',
     summary = 'raw',
     start = 2005,
     end = 2007,
     rcp = 85,
     gcm = 'ACCESS1-3',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE
 )
 
-out
+raw
 
-# EVERYTHING!!!
-out <- lorenzClim(
+# difference between corrected/uncorrected WDI rasters
+correct <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = TRUE,
+    yearByYear = FALSE
+)
+
+incorrect <- lorenzClim(
+    var = 'WDI',
+    summary = 'summary',
+    start = 2005,
+    end = 2007,
+    rcp = 85,
+    gcm = 'ACCESS1-3',
+    lorenz = lorenz,
+	correctWDI = FALSE,
+    yearByYear = FALSE
+)
+
+plot(c(correct, incorrect, -1 * incorrect))
+
+# EVERYTHING!!! Can take a few minutes, even for a 3-yr time span...
+all <- lorenzClim(
     var = '*',
     summary = '*',
     start = 2005,
     end = 2007,
-    rcp = 85,
+    rcp = '*',
     gcm = '*',
-    lorenz = lorenz
+    lorenz = lorenz,
+    yearByYear = FALSE,
+	verbose = TRUE
 )
 
-out
+all
 ```
 
 # Citations #
