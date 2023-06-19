@@ -5,8 +5,8 @@
 #' Processing is "seemless" across the historical and future sets. For example, if you desire to calculate temperature across the period 1991 to 2020, the functions will combine the appropriate monthly values from the historical and future sets, so long as both sets are downloaded.
 #'
 #' **IMPORTANT**: To process historical and future rasters, they must be downloaded and saved as NetCDF files (the same format in which they are supplied). Data are available on [Dryad][https://datadryad.org//resource/doi:10.5061/dryad.1597g]
-#' * Historical files: Historical rasters must be downloaded, unzipped, and saved in a folder named "`./historical`". Each subfolder therein should be the same of a GCM, and have the appropriate NetCDF files.
-#' * Future files: The future files for RCP 4.5 are *must be* place a folder named `./rcp45`, and those for RCP 8.5 in `./rcp85`. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them. 
+#' * Historical files: Historical rasters must be downloaded, unzipped, and *must be* saved in a folder named "`./historical`". Each subfolder therein should be the same of a GCM, and have the appropriate NetCDF files.
+#' * Future files: The future files for RCP 4.5 *must be* place a folder named `./rcp45`, and those for RCP 8.5 in `./rcp85`. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them. 
 #'
 #' @param rcp Numeric or missing: If only historical (`start` and `end` are within 1950-2005) variables are desired, then this can be missing. Otherwise, it represents the Representative Concentration Pathway for rasters, and can be any of `45`, `4.5`, `85`, or `8.5`.
 #'
@@ -19,7 +19,7 @@
 #' * `tmax`: Maximum temperature (deg C)
 #' * `tmin`: Maximum temperature (deg C)
 #' * `tmean`: Mean temperature (deg C) (not part of original Lorenz variables)
-#' * `prec`: Precipitation (mm)
+#' * `prcp`: Precipitation (mm)
 #' * `GDD0` and `GDD5: Growing degree days using base 0 deg C or 5 deg C (days)
 #' * `AET`: Actual evapotranspiration (mm)
 #' * `PET`: Potential evapotranspiration (mm)
@@ -43,7 +43,11 @@
 #'
 #' @param lorenz Character: Full path of the folder that contains `./rcp45` and/or `./rcp85`.
 #'
+#' @param yearByYear Logical: If `FALSE` (default), then for the annual "variability" summary statistic, first take the mean for each month (annual summaries) or quarter (quarter summaries) across years, then calculate the summary statistic across the 12 or 4 rasters. If `TRUE`, calculate the summary statistic across each year first, then take the average across years.
+#'
 #' @param start,end Numeric: Start and end years of the period over which the variables are to be calculated. If the period is longer than a year, then the averages across years will be returned. Values must be between 1950 and 2100, inclusive.
+#'
+#' @param verbose Logical: If `TRUE`, display progress.
 #'
 #' @returns A `SpatRaster` with one or more layers. Each layer will be named as per the respetive paleoclimate variable in Lorenz et al. (2016), Table 2.
 #'
@@ -60,7 +64,9 @@ lorenzClim <- function(
 	end,
 	rcp,
 	gcm,
-	lorenz
+	lorenz,
+	yearByYear = FALSE,
+	verbose = FALSE
 ) {
 
 	### debugging
@@ -75,6 +81,7 @@ lorenzClim <- function(
 		rcp <- 85
 		gcm <- 'ACCESS1-3'
 		lorenz <- lorenz
+		yearByYear <- FALSE
 	
 	}
 
@@ -90,9 +97,13 @@ lorenzClim <- function(
 		
 		if (missing(rcp) && (start >= 2006 | end >= 2006)) {
 			stop('You must specify the RCP for any periods that extend past 2005.')
+		} else if ('*' %in% rcp & end >= 2006) {
+			rcp <- c(45, 85)
+		} else if ('*' %in% rcp & end <= 2005) {
+			rcp <- NULL
 		} else if (end >= 2006) {
-			if (rcp %in% c(4.5, 8.5)) rcp <- rcp * 10
-			if (!(rcp %in% c(45, 85))) stop('RCP must be 45 or 85.')
+			for (i in seq_along(rcp)) if (rcp[i] %in% c(4.5, 8.5)) rcp[i] <- rcp[i] * 10
+			if (!(any(rcp %in% c(45, 85)))) stop('RCP must be 45 and/or 85.')
 		} else if (end <= 2005) {
 			rcp <- NULL
 		}
@@ -124,7 +135,7 @@ lorenzClim <- function(
 	### variable(s)
 	###############
 
-		options <- c('tmax', 'tmin', 'tmean', 'prec', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'VP')
+		options <- c('tmax', 'tmin', 'tmean', 'prcp', 'GDD0', 'GDD5', 'AET', 'PET', 'ETR', 'WDI', 'wind', 'VP')
 		
 		var <- unique(var)
 		if ('*' %in% var) {
@@ -151,7 +162,7 @@ lorenzClim <- function(
 
 		summary <- unique(summary)
 		if ('*' %in% summary) {
-			summary <- options
+			summary <- options[options != 'raw']
 		} else {
 
 			# match
@@ -187,7 +198,7 @@ lorenzClim <- function(
 	###############
 
 		if (any(c('tmin', 'tmax', 'tmean') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='temp')
-		if (any(c('prec', 'WDI') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='prcp')
+		if (any(c('prcp', 'WDI') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='prcp')
 		if (any(c('GDD0', 'GDD5') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='gdd')
 		if (any(c('AET', 'PET', 'ETR', 'WDI') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='ET')
 		if (any(c('wind') %in% var)) .checkFile(lorenz=lorenz, rcp=rcp, gcm=gcm, start=start, end=end, filename='wind')
@@ -197,122 +208,133 @@ lorenzClim <- function(
 	################################
 	
 	out <- list()
-
+	count <- 0L
 	for (countGcm in seq_along(gcm)) {
 	
 		thisGcm <- gcm[countGcm]
 		
-		if (any('tmax' %in% var)) {
-			thisOut <- .lorenzTmax(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+		for (thisRcp in rcp) {
+			
+			count <- count + 1L
+			
+			if (verbose) {
+				cat(thisGcm, 'GCM | RCP', thisRcp, '\n')
+				utils::flush.console()
 			}
-		}
+			
+			if (any('tmax' %in% var)) {
+				thisOut <- .temperature(key='tmax', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
+			}
 
-		if (any('tmin' %in% var)) {
-			thisOut <- .lorenzTmin(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('tmin' %in% var)) {
+				thisOut <- .temperature(key='tmin', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('tmean' %in% var)) {
-			thisOut <- .lorenzTmean(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('tmean' %in% var)) {
+				thisOut <- .temperature(key='tmean', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('prec' %in% var)) {
-			thisOut <- .lorenzPrec(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('prcp' %in% var)) {
+				thisOut <- .prec(key='prcp', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('GDD0' %in% var)) {
-			thisOut <- .lorenzGDD0(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('GDD0' %in% var)) {
+				thisOut <- .gdd(key='GDD0', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('GDD5' %in% var)) {
-			thisOut <- .lorenzGDD5(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('GDD5' %in% var)) {
+				thisOut <- .gdd(key='GDD5', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('AET' %in% var)) {
-			thisOut <- .lorenzAET(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('AET' %in% var)) {
+				thisOut <- .et(key='AET', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('PET' %in% var)) {
-			thisOut <- .lorenzPET(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('PET' %in% var)) {
+				thisOut <- .et(key='PET', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('ETR' %in% var)) {
-			thisOut <- .lorenzETR(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('ETR' %in% var)) {
+				thisOut <- .etr(key='ETR', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
 
-		if (any('WDI' %in% var)) {
-			thisOut <- .lorenzWDI(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			if (any('WDI' %in% var)) {
+				thisOut <- .wdi(key='WDI', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
-		
-		if (any('wind' %in% var)) {
-			thisOut <- .lorenzWind(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			
+			if (any('wind' %in% var)) {
+				thisOut <- .wind(key='wind', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
-		
-		if (any('VP' %in% var)) {
-			thisOut <- .lorenzVP(rcp=rcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz)
-			if (length(out) < countGcm) {
-				out[[countGcm]] <- thisOut
-			} else {
-				out[[countGcm]] <- c(out[[countGcm]], thisOut)
+			
+			if (any('VP' %in% var)) {
+				thisOut <- .vp(key='VP', rcp=thisRcp, gcm=thisGcm, start=start, end=end, summary=summary, lorenz=lorenz, yearByYear=yearByYear)
+				if (length(out) < countGcm) {
+					out[[count]] <- thisOut
+				} else {
+					out[[count]] <- c(out[[countGcm]], thisOut)
+				}
 			}
-		}
+
+		} # next RCP
 
 	} # next GCM
 
-	names(out) <- gcm
+	names(out) <- paste0(gcm, '_rcp', rcp)
 	if (length(gcm) == 1L) out <- out[[1L]]
 	out
 
@@ -321,21 +343,27 @@ lorenzClim <- function(
 ### check file names
 .checkFile <- function(lorenz, rcp, gcm, start, end, filename) {
 
+	if (is.null(rcp)) rcp <- NA
+
 	for (thisGcm in gcm) {
 
-		if (start <= 2005) {
-			file <- paste0(lorenz, '/historical/', thisGcm, '/', filename, '.nc')
-			if (!file.exists(file)) {
-				stop('File not found at:\n  ', file)
+		for (thisRcp in rcp) {
+
+			if (start <= 2005) {
+				file <- paste0(lorenz, '/historical/', thisGcm, '/', filename, '.nc')
+				if (!file.exists(file)) {
+					stop('File not found at:\n  ', file)
+				}
 			}
-		}
-		if (end >= 2006) {
-			file <- paste0(lorenz, '/rcp', rcp, '/', thisGcm, '/', filename, '.nc')
-			if (!file.exists(file)) {
-				stop('File not found at:\n  ', file)
+			if (end >= 2006) {
+				file <- paste0(lorenz, '/rcp', thisRcp, '/', thisGcm, '/', filename, '.nc')
+				if (!file.exists(file)) {
+					stop('File not found at:\n  ', file)
+				}
 			}
+			
 		}
-		
+			
 	}
 	invisible(TRUE)
 }
@@ -354,7 +382,7 @@ lorenzClim <- function(
 	### historic climate
 	if (start <= 2005) {
 
-		hist <- rast(paste0(lorenz, '/historical/', gcm, '/', filename, '.nc'))
+		hist <- terra::rast(paste0(lorenz, '/historical/', gcm, '/', filename, '.nc'))
 		if (set == 1) {
 			hist <- hist[[1L:672L]]
 		} else {
@@ -375,11 +403,11 @@ lorenzClim <- function(
 	### future climate
 	if (end >= 2006) {
 	
-		fut <- rast(paste0(lorenz, '/rcp', rcp, '/', gcm, '/', filename, '.nc'))
+		fut <- terra::rast(paste0(lorenz, '/rcp', rcp, '/', gcm, '/', filename, '.nc'))
 		if (set == 1) {
-			fut <- fut[[1L:1440L]]
+			fut <- fut[[1L:1140L]]
 		} else {
-			fut <- fut[[1441:2280L]]
+			fut <- fut[[1141:2280L]]
 		}
 	
 		thisStart <- max(2006L, start)
@@ -406,39 +434,71 @@ lorenzClim <- function(
 }
 	
 # annual summary function
-.annual <- function(y, fx) {
+.annual <- function(y, fx, yearByYear) {
 
 	# y			raster stack
 	# fx 		summary function as a character: 'mean', 'sum', 'sd', or 'cv'
+	# yearByYear logical
 
 	mos <- terra::nlyr(y)
 	yrs <- mos / 12L
 	
-	for (yr in seq_len(yrs)) {
+	# collate by month first
+	if (!yearByYear) {
+	
+		for (yr in 1L:12L) {
 
-		indices <- 12L * (yr - 1) + 1L:12L
-		yy <- y[[indices]]
-
-		if (fx == 'mean') {
+			indices <- 1L:yrs * 12L - (12L - yr + 1L) + 1L
+			yy <- y[[indices]]
 			yyy <- terra::mean(yy)
+			if (yr == 1L) {
+				out <- yyy
+			} else {
+				out <- c(out, yyy)
+			}
+		
+		}
+	
+		if (fx == 'mean') {
+			out <- terra::mean(out)
 		} else if (fx == 'sd') {
-			yyy <- terra::app(yy, function(x) sd(x))
+			out <- terra::app(out, function(x) sd(x))
 		} else if (fx == 'sum') {
-			yyy <- sum(yy)
+			out <- sum(out)
 		} else if (fx == 'cv') {
-			yyy <- cv(yy)
+			out <- cv(out)
 		}
 
-		if (yr == 1L) {
-			out <- yyy
-		} else {
-			out <- c(out, yyy)
+	# collate year-by-year
+	} else {
+		
+		for (yr in seq_len(yrs)) {
+
+			indices <- 12L * (yr - 1) + 1L:12L
+			yy <- y[[indices]]
+
+			if (fx == 'mean') {
+				yyy <- terra::mean(yy)
+			} else if (fx == 'sd') {
+				yyy <- terra::app(yy, function(x) sd(x))
+			} else if (fx == 'sum') {
+				yyy <- sum(yy)
+			} else if (fx == 'cv') {
+				yyy <- cv(yy)
+			}
+
+			if (yr == 1L) {
+				out <- yyy
+			} else {
+				out <- c(out, yyy)
+			}
+		
 		}
-	
+		
+		out <- terra::mean(out)
 	}
-	
-	terra::mean(out)
-	
+	out
+		
 }
 
 # values of quarter with lowest/highest values
@@ -491,7 +551,7 @@ lorenzClim <- function(
 	}
 	
 	terra::mean(out)
-	
+		
 }
 
 # values of month with lowest/highest values
