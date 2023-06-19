@@ -16,7 +16,7 @@ Processing is "seemless" across the historical and future sets. For example, if 
 * Historical files: Historical rasters must be downloaded, unzipped, and saved in a folder named "`./historical`". Each subfolder therein should be the same of a GCM, and have the appropriate NetCDF files.
 * Future files: The future files for RCP 4.5 are *must be* place a folder named `./rcp45`, and those for RCP 8.5 in `./rcp85`. Each of these folders should have one subfolder for each GCM, and the appropriate NetCDF files should be contained inside of them.
 
-## Installation ##
+# Installation #
 You can install this package from CRAN using:
 
 `install.packages('lorenzClim', dependencies = TRUE)`
@@ -129,7 +129,7 @@ out <- lorenzClim(
 out
 ```
 
-# Citations
+# Citations #
 
 Please cite:
 
