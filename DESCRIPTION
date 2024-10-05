@@ -36,5 +36,6 @@ Imports:
 	terra,
 	utils
 URL: https://github.com/adamlilith/lorenzClim
+BugReports: https://github.com/adamlilith/lorenzClim/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
